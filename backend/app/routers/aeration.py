@@ -50,9 +50,12 @@ def create_entry(payload: EntryPayload) -> ActionResult:
 
 @router.post("/{entry_id}/actions", response_model=ActionResult)
 def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
-    """对单条曝气记录执行提交调节、复核确认、锁定参数；不允许的动作会被拦下并说明原因。"""
+    """对单条曝气记录执行提交调节、复核确认、锁定参数。
+
+    已锁定的记录只读，任何动作与参数改动都会被拦下；重复调节、空参数提交也会给出说明。
+    """
     action = str(payload.values.get("action") or "").strip()
-    entry, message = service.run_action(entry_id, action)
+    entry, message = service.run_action(entry_id, action, payload.values)
     if entry is None:
         return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message=message, entry=entry)
